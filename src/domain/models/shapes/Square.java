@@ -1,14 +1,12 @@
 package domain.models.shapes;
 
-import domain.utils.CustomColor;
 
-import domain.models.ShapeInterface;
-import domain.utils.CustomColor;
+import domain.models.utils.ShapeColor;
 
-public class Square extends AbstractShape {
+public class Square extends AbstractShape implements Validatable {
     private double sideLength;
 
-    public Square(String name, CustomColor color, double sideLength) {
+    public Square(ShapeName name, ShapeColor color, double sideLength) {
         super(name, color);
         this.sideLength = sideLength;
     }
@@ -30,4 +28,16 @@ public class Square extends AbstractShape {
     public void setSideLength(double sideLength) {
         this.sideLength = sideLength;
     }
+
+    @Override
+    public boolean isValid() {
+        return sideLength > 0;
+    }
+
+    @Override
+    public AbstractShape clone() {
+        // Create a new Square instance and copy relevant attributes
+        return new Square(getName(), color, sideLength);
+    }
+
 }

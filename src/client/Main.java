@@ -1,92 +1,127 @@
 package client;
 
+import domain.models.shapes.RegularPolygon;
+import domain.models.shapes.TriangleType;
+import domain.models.utils.ShapeColor;
+import domain.models.shapes.ShapeName;
 import domain.factory.*;
 import domain.models.shapes.AbstractShape;
-import domain.enums.ShapeName;
-import domain.enums.ShapeColor;
 
-import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
+import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
-        ShapeName randomShapeName = getRandomEnum(ShapeName.class);
-        ShapeColor randomShapeColor = getRandomEnum(ShapeColor.class);
+        Scanner scanner = new Scanner(System.in);
+        boolean exit = false;
 
+        // Create instances of shape factories
+        ShapeFactory circleFactory = CircleCreator.getInstance();
+        ShapeFactory squareFactory = SquareCreator.getInstance();
+        ShapeFactory rectangleFactory = RectangleCreator.getInstance();
+        ShapeFactory polygonFactory = PolygonCreator.getInstance();
+        ShapeFactory triangleFactory = TriangleCreator.getInstance();
+
+        ShapeDisplay shapeDisplay = new ConsoleShapeDisplay();  // Create the ShapeDisplay instance
+
+        while (!exit) {
+            System.out.print("Enter the shape (CIRCLE, SQUARE, RECTANGLE, POLYGON, TRIANGLE), or type 'exit' to quit: ");
+            String shapeInput = scanner.nextLine();
+
+            if (shapeInput.equalsIgnoreCase("exit")) {
+                exit = true;
+                continue;
+            }
+
+            try {
+                ShapeName selectedShape = ShapeName.valueOf(shapeInput);
+
+                System.out.print("Enter the shape color (RED, GREEN, BLUE, YELLOW, CYAN, MAGENTA, ORANGE): ");
+                String colorInput = scanner.nextLine().toUpperCase();
+                ShapeColor selectedColor = ShapeColor.valueOf(colorInput);
+
+                AbstractShape shape = null;  // Initialize shape with a default value
+
+                Map<String, Object> shapeParams = new HashMap<>();
+                shapeParams.put("shapeName", selectedShape);
+
+                switch (selectedShape) {
+                    case CIRCLE:
+                        System.out.print("Enter the radius for the circle: ");
+                        double radius = Double.parseDouble(scanner.nextLine());
+                        shapeParams.put("radius", radius);
+                        shape = createShape(circleFactory, selectedShape, selectedColor, shapeParams);
+                        break;
+                    case SQUARE:
+                        System.out.print("Enter the side length for the square: ");
+                        double sideLength = Double.parseDouble(scanner.nextLine());
+                        shapeParams.put("sideLength", sideLength);
+                        shape = createShape(squareFactory, selectedShape, selectedColor, shapeParams);
+                        break;
+                    case RECTANGLE:
+                        System.out.print("Enter the width for the rectangle: ");
+                        double width = Double.parseDouble(scanner.nextLine());
+                        System.out.print("Enter the height for the rectangle: ");
+                        double height = Double.parseDouble(scanner.nextLine());
+                        shapeParams.put("width", width);
+                        shapeParams.put("height", height);
+                        shape = createShape(rectangleFactory, selectedShape, selectedColor, shapeParams);
+                        break;
+                    case POLYGON:
+                        System.out.print("Enter the number of sides for the polygon: ");
+                        int numSides = Integer.parseInt(scanner.nextLine());
+                        System.out.print("Enter the side length for the polygon: ");
+                        double sidesLength = Double.parseDouble(scanner.nextLine());
+                        shapeParams.put("numSides", numSides);
+                        shapeParams.put("sideLength", sidesLength);
+                        shape = createShape(polygonFactory, selectedShape, selectedColor, shapeParams);
+
+                        if (shape instanceof RegularPolygon) {
+                            RegularPolygon regularPolygon = (RegularPolygon) shape;
+                            String interiorAngle = regularPolygon.getInteriorAngle();
+                            System.out.println(interiorAngle);
+                        }
+                        break;
+                    case TRIANGLE:
+                        System.out.print("Enter the length of side A for the triangle: ");
+                        double sideA = Double.parseDouble(scanner.nextLine());
+                        System.out.print("Enter the length of side B for the triangle: ");
+                        double sideB = Double.parseDouble(scanner.nextLine());
+                        System.out.print("Enter the length of side C for the triangle: ");
+                        double sideC = Double.parseDouble(scanner.nextLine());
+                        shapeParams.put("sideA", sideA);
+                        shapeParams.put("sideB", sideB);
+                        shapeParams.put("sideC", sideC);
+                        shape = createShape(triangleFactory, selectedShape, selectedColor, shapeParams);
+
+                        if (shape instanceof TriangleType) {
+                            TriangleType triangle = (TriangleType) shape;
+                            String typeBySides = triangle.typeTriangleSide();
+                            String typeByAngle = triangle.typeTriangleAngle();
+                            System.out.println("Type by Sides: " + typeBySides);
+                            System.out.println("Type by Angle: " + typeByAngle);
+                        }
+                        break;
+
+                }
+
+                if (shape != null) {
+                    System.out.println("Selected Shape: " + selectedShape);
+                    System.out.println("Selected Color: " + selectedColor);
+                    shapeDisplay.displayShape(shape);  // Display the created shape
+                } else {
+                    System.out.println("Failed to create a shape.");
+                }
+            } catch (IllegalArgumentException e) {
+                System.out.println("Invalid input. Please enter a valid input or 'exit' to quit.");
+            }
+        }
+    }
+
+    private static AbstractShape createShape(ShapeFactory shapeFactory, ShapeName name, ShapeColor color, Map<String, Object> shapeParams) {
         AbstractShape shape;
-        String shapeType;
-
-        // Create a map of parameters based on the chosen shape
-        Map<String, Object> shapeParams = new HashMap<>();
-        shapeParams.put("shapeName", randomShapeName);
-
-        switch (randomShapeName) {
-            case CIRCLE:
-                shapeParams.put("radius", 5.0);
-                shapeType = "Circle";
-                break;
-            case SQUARE:
-                shapeParams.put("sideLength", 3.0);
-                shapeType = "Square";
-                break;
-            case RECTANGLE:
-                shapeParams.put("width", 4.0);
-                shapeParams.put("height", 6.0);
-                shapeType = "Rectangle";
-                break;
-            case POLYGON:
-                shapeParams.put("numSides", 6);
-                shapeParams.put("sideLength", 5.0);
-                shapeType = "Regular Polygon";
-                break;
-            case TRIANGLE:
-                shapeParams.put("a", 4.0);
-                shapeParams.put("b", 5.0);
-                shapeParams.put("c", 3.0);
-                shapeType = "Triangle";
-                break;
-            // Add cases for other shape types
-            default:
-                shape = null;
-                shapeType = "Unknown";
-        }
-
-        // Create the shape using the factory and provided parameters
-        if (shapeParams.containsKey("shapeName")) {
-            shape = ShapeFactory.createShape("Shape", randomShapeColor.toCustomColor(), shapeParams);
-        } else {
-            shape = null;
-        }
-
-        if (shape != null) {
-            // Change text color based on the selected color
-            changeConsoleTextColor(new Color(randomShapeColor.getRed(), randomShapeColor.getGreen(), randomShapeColor.getBlue()));
-
-            System.out.println("Created " + shapeType + " with color: " + randomShapeColor);
-            System.out.println(shapeType + " Area: " + shape.calculateArea());
-            System.out.println(shapeType + " Perimeter: " + shape.calculatePerimeter());
-
-            resetConsoleTextColor();
-        } else {
-            System.out.println("Failed to create a shape.");
-        }
-    }
-
-    // Helper method to get a random enum value
-    private static <T extends Enum<?>> T getRandomEnum(Class<T> enumClass) {
-        T[] values = enumClass.getEnumConstants();
-        return values[new Random().nextInt(values.length)];
-    }
-
-    // Helper method to change console text color
-    private static void changeConsoleTextColor(Color color) {
-        System.out.print("\033[38;2;" + color.getRed() + ";" + color.getGreen() + ";" + color.getBlue() + "m");
-    }
-
-    // Helper method to reset console text color to default
-    private static void resetConsoleTextColor() {
-        System.out.print("\033[0m");
+        shape = shapeFactory.createShape(name, color, shapeParams);
+        return shape;
     }
 }
